@@ -40,11 +40,16 @@ export class ContextView<T = unknown> extends EventEmitter
   protected _cachedValues: T[] | undefined;
   private _subscription: Subscription | undefined;
 
-  constructor(
-    protected readonly context: Context,
-    public readonly filter: BindingFilter<T>,
-  ) {
+  // Workaround to pass TypeScript's "strictFunctionTypes" check:
+  // Type 'BindingFilter<T>' is not assignable to type 'BindingFilter<unknown>'.
+  //   Type 'unknown' is not assignable to type 'T'.
+  readonly filter: BindingFilter<unknown>;
+
+  constructor(protected readonly context: Context, filter: BindingFilter<T>) {
     super();
+
+    // Workaround to pass TypeScript's "strictFunctionTypes" check
+    this.filter = filter as BindingFilter<unknown>;
   }
 
   /**
@@ -85,10 +90,11 @@ export class ContextView<T = unknown> extends EventEmitter
   /**
    * Find matching bindings and refresh the cache
    */
-  protected findBindings() {
+  protected findBindings(): Readonly<Binding<T>>[] {
     debug('Finding matching bindings');
-    this._cachedBindings = this.context.find(this.filter);
-    return this._cachedBindings;
+    const found = this.context.find(this.filter);
+    this._cachedBindings = found;
+    return found;
   }
 
   /**

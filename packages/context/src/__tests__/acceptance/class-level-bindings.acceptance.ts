@@ -458,8 +458,8 @@ describe('Context bindings - Injecting dependencies of classes', () => {
         'location',
         {},
         // Set up a custom resolve() to access information from the session
-        (c: Context, injection: Injection, session: ResolutionSession) => {
-          resolutionPath = session.getResolutionPath();
+        (c: Context, injection: Injection, session?: ResolutionSession) => {
+          resolutionPath = session ? session.getResolutionPath() : undefined;
           return 'San Jose';
         },
       )

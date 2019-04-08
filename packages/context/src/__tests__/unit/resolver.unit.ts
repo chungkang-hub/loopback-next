@@ -213,7 +213,9 @@ describe('constructor injection', () => {
         'p',
         {},
         // Set up a custom resolve() to access information from the session
-        (c: Context, injection: Injection, session: ResolutionSession) => {
+        (c: Context, injection: Injection, session?: ResolutionSession) => {
+          if (!session)
+            throw new Error('Resolver was called with no ResolutionSession');
           bindingPath = session.getBindingPath();
           resolutionPath = session.getResolutionPath();
         },
@@ -251,7 +253,9 @@ describe('constructor injection', () => {
         'p',
         {},
         // Set up a custom resolve() to access information from the session
-        (c: Context, injection: Injection, session: ResolutionSession) => {
+        (c: Context, injection: Injection, session?: ResolutionSession) => {
+          if (!session)
+            throw new Error('Resolver was called with no ResolutionSession');
           bindingPath = session.getBindingPath();
           resolutionPath = session.getResolutionPath();
           decorators = session.injectionStack.map(i => i.metadata!.decorator);
@@ -290,7 +294,9 @@ describe('constructor injection', () => {
         'p',
         {},
         // Set up a custom resolve() to access information from the session
-        (c: Context, injection: Injection, session: ResolutionSession) => {
+        (c: Context, injection: Injection, session?: ResolutionSession) => {
+          if (!session)
+            throw new Error('Resolver was called with no ResolutionSession');
           injectionPath = session.getInjectionPath();
         },
       )
