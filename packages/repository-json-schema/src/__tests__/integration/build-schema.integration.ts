@@ -3,22 +3,11 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import {MetadataInspector} from '@loopback/context';
-import {
-  belongsTo,
-  Entity,
-  hasMany,
-  model,
-  property,
-} from '@loopback/repository';
-import {expect} from '@loopback/testlab';
+import { MetadataInspector } from '@loopback/context';
+import { belongsTo, Entity, hasMany, model, property } from '@loopback/repository';
+import { expect } from '@loopback/testlab';
 import * as Ajv from 'ajv';
-import {
-  getJsonSchema,
-  JsonSchema,
-  JSON_SCHEMA_KEY,
-  modelToJsonSchema,
-} from '../..';
+import { getJsonSchema, JsonSchema, JSON_SCHEMA_KEY, modelToJsonSchema } from '../..';
 
 describe('build-schema', () => {
   describe('modelToJsonSchema', () => {
@@ -64,7 +53,7 @@ describe('build-schema', () => {
       });
 
       it('does not convert models that have not been decorated with @model()', () => {
-        class Empty {}
+        class Empty { }
 
         class NoModelMeta {
           @property()
@@ -93,7 +82,7 @@ describe('build-schema', () => {
       });
 
       it('overrides "title" property if explicitly given', () => {
-        @model({title: 'NewName'})
+        @model({ title: 'NewName' })
         class TestModel {
           @property()
           foo: string;
@@ -238,11 +227,11 @@ describe('build-schema', () => {
       it('supports explicit primitive type decoration via strings', () => {
         @model()
         class TestModel {
-          @property({type: 'string'})
+          @property({ type: 'string' })
           hardStr: Number;
-          @property({type: 'boolean'})
+          @property({ type: 'boolean' })
           hardBool: String;
-          @property({type: 'number'})
+          @property({ type: 'number' })
           hardNum: Boolean;
         }
 
@@ -264,9 +253,9 @@ describe('build-schema', () => {
       it('maps "required" keyword to the schema appropriately', () => {
         @model()
         class TestModel {
-          @property({required: false})
+          @property({ required: false })
           propOne: string;
-          @property({required: true})
+          @property({ required: true })
           propTwo: string;
           @property()
           propThree: number;
@@ -280,7 +269,7 @@ describe('build-schema', () => {
       it('errors out when explicit type decoration is not primitive', () => {
         @model()
         class TestModel {
-          @property({type: 'NotPrimitive'})
+          @property({ type: 'NotPrimitive' })
           bad: String;
         }
 
@@ -290,7 +279,7 @@ describe('build-schema', () => {
       it('properly converts array of types defined by strings', () => {
         @model()
         class TestModel {
-          @property({type: 'array', itemType: 'number'})
+          @property({ type: 'array', itemType: 'number' })
           num: number[];
         }
 
@@ -399,7 +388,7 @@ describe('build-schema', () => {
           expect(jsonSchema.properties).to.deepEqual({
             cusType: {
               type: 'array',
-              items: {$ref: '#/definitions/CustomType'},
+              items: { $ref: '#/definitions/CustomType' },
             },
           });
           expect(jsonSchema.definitions).to.deepEqual({
@@ -471,7 +460,7 @@ describe('build-schema', () => {
           expect(jsonSchema.properties).to.deepEqual({
             addresses: {
               type: 'array',
-              items: {$ref: '#/definitions/Address'},
+              items: { $ref: '#/definitions/Address' },
             },
           });
           expect(jsonSchema.definitions).to.deepEqual({
@@ -490,7 +479,7 @@ describe('build-schema', () => {
         it('properly converts models with hasMany/belongsTo relation', () => {
           @model()
           class Order extends Entity {
-            @property({id: true})
+            @property({ id: true })
             id: number;
 
             @belongsTo(() => Customer)
@@ -499,7 +488,7 @@ describe('build-schema', () => {
 
           @model()
           class Customer extends Entity {
-            @property({id: true})
+            @property({ id: true })
             id: number;
 
             @hasMany(() => Order)
@@ -513,16 +502,16 @@ describe('build-schema', () => {
           expectValidJsonSchema(orderSchema);
 
           expect(orderSchema.properties).to.deepEqual({
-            id: {type: 'number'},
-            customerId: {type: 'number'},
+            id: { type: 'number' },
+            customerId: { type: 'number' },
           });
           expect(customerSchema.properties).to.deepEqual({
-            id: {type: 'number'},
+            id: { type: 'number' },
           });
           expect(customerSchema.properties).to.not.containDeep({
             orders: {
               type: 'array',
-              items: {$ref: '#/definitions/Order'},
+              items: { $ref: '#/definitions/Order' },
             },
           });
           expect(customerSchema.definitions).to.not.containEql({
@@ -532,7 +521,7 @@ describe('build-schema', () => {
                 id: {
                   type: 'number',
                 },
-                customerId: {type: 'number'},
+                customerId: { type: 'number' },
               },
             },
           });
@@ -609,7 +598,7 @@ describe('build-schema', () => {
         properties: {
           products: {
             type: 'array',
-            items: {$ref: '#/definitions/Product'},
+            items: { $ref: '#/definitions/Product' },
           },
         },
         definitions: {
@@ -626,7 +615,7 @@ describe('build-schema', () => {
             properties: {
               products: {
                 type: 'array',
-                items: {$ref: '#/definitions/Product'},
+                items: { $ref: '#/definitions/Product' },
               },
             },
           },
@@ -689,5 +678,42 @@ describe('build-schema', () => {
         },
       });
     });
+    it('does not generate the definition for visited model', () => {
+      @model()
+      class Category {
+        @property.array(() => Product)
+        products?: Product[];
+      }
+
+      @model()
+      class Product {
+        @property(() => Category)
+        category?: Category;
+      }
+
+      const expectedSchema = {
+        title: 'Product',
+        properties: {
+          category: {
+            $ref: '#/definitions/Category',
+          },
+        },
+        definitions: {
+          Category: {
+            title: 'Category',
+            properties: {
+              products: {
+                type: 'array',
+                items: { $ref: '#/definitions/Product' },
+              },
+            },
+          },
+        }
+      };
+
+      const options = { visited: new Set(['Category']) };
+      const schema = getJsonSchema(Product, options);
+      expect(schema).to.deepEqual(expectedSchema);
+    })
   });
 });
